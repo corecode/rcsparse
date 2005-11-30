@@ -1,0 +1,41 @@
+head	1.1;
+access;
+symbols
+	newbranch:1.1.0.2;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2005.01.04.22.42.50;	author corecode;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2005.01.04.22.42.50;	author corecode;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@file moo was initially added on branch newbranch.
+@
+text
+@@
+
+
+1.1.2.1
+log
+@add moo
+@
+text
+@a0 1
+a
+@
+
