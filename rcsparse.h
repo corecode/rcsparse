@@ -1,8 +1,8 @@
 #ifndef RCSPARSE_H
 #define RCSPARSE_H
 
-#include <sys/queue.h>
-#include <sys/tree.h>
+#include "queue.h"
+#include "tree.h"
 
 RB_HEAD(rcsrevtree, rcsrev);
 RB_HEAD(rcstokmap, rcstokpair);

@@ -38,8 +38,8 @@
 #ifndef _SYS_QUEUE_H_
 #define	_SYS_QUEUE_H_
 
-#ifndef _MACHINE_STDINT_H_
-#include <machine/stdint.h>	/* for __offsetof */
+#ifndef __offsetof
+#define __offsetof(s, e)	((size_t)(&((s)0).e))
 #endif
 
 /*
