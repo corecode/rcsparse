@@ -1185,7 +1185,7 @@ rcsopen(const char *filename)
 
 	rcs->size = st.st_size;
 
-	rcs->data = mmap(NULL, rcs->size, PROT_READ, 0, rcs->file, 0);
+	rcs->data = mmap(NULL, rcs->size, PROT_READ, MAP_PRIVATE, rcs->file, 0);
 	if (rcs->data == MAP_FAILED)
 		goto fail;
 
