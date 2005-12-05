@@ -1,7 +1,8 @@
 #include <Python.h>
 
-#include <sys/queue.h>
 #include <sys/types.h>
+
+#include "queue.h"
 
 #include "rcsparse.h"
 

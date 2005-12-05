@@ -1,8 +1,6 @@
 #include <sys/types.h>
 #include <sys/mman.h>
-#include <sys/queue.h>
 #include <sys/stat.h>
-#include <sys/tree.h>
 
 #include <ctype.h>
 #include <err.h>
@@ -11,6 +9,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
+#include "queue.h"
+#include "tree.h"
 
 #include "rcsparse.h"
 
