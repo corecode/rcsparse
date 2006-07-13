@@ -52,11 +52,15 @@ pyrcsrevtree_find_internal(struct pyrcsrevtree *self, PyObject *key, struct rcsr
 {
 	struct rcsrev rev;
 	struct rcstoken tok;
+	int l;
 
 	if (!PyString_CheckExact(key))
 		return -1;
 
-	PyString_AsStringAndSize(key, &tok.str, &tok.len);
+	PyString_AsStringAndSize(key, &tok.str, &l);
+	if (l < 0)
+		return -1;
+	tok.len = (unsigned)l;
 	rev.rev = &tok;
 	*frev = RB_FIND(rcsrevtree, self->tree, &rev);
 	return *frev != NULL;
@@ -316,11 +320,15 @@ pyrcstokmap_find_internal(struct pyrcstokmap *self, PyObject *key, struct rcstok
 {
 	struct rcstokpair pair;
 	struct rcstoken tok;
+	int l;
 
 	if (!PyString_CheckExact(key))
 		return -1;
 
-	PyString_AsStringAndSize(key, &tok.str, &tok.len);
+	PyString_AsStringAndSize(key, &tok.str, &l);
+	if (l < 0)
+		return -1;
+	tok.len = (unsigned)l;
 	pair.first = &tok;
 	*fpair = RB_FIND(rcstokmap, self->map, &pair);
 	return *fpair != NULL;
@@ -548,7 +556,7 @@ pyrcsfile_getstr(struct pyrcsfile *self, void *closure)
 
 	adm = &self->rcs->admin;
 
-	switch ((int)closure) {
+	switch ((int)(uintptr_t)closure) {
 	case PYRCSADM_HEAD:	tok = adm->head; break;
 	case PYRCSADM_BRANCH:	tok = adm->branch; break;
 	case PYRCSADM_COMMENT:	tok = adm->comment; break;
@@ -572,7 +580,7 @@ pyrcsfile_gettokmap(struct pyrcsfile *self, void *closure)
 
 	adm = &self->rcs->admin;
 
-	switch ((int)closure) {
+	switch ((int)(uintptr_t)closure) {
 	case PYRCSADM_SYMBOLS:	map = &adm->symbols; break;
 	case PYRCSADM_LOCKS:	map = &adm->locks; break;
 	default:
