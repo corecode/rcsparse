@@ -1,6 +1,7 @@
 #include <Python.h>
 
 #include <sys/types.h>
+#include <stdint.h>
 
 #include "queue.h"
 
