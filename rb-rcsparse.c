@@ -299,6 +299,8 @@ rb_rcsrev_new(struct rcsrev *rev)
 	rb_iv_set(self, "@state", str_from_tok2(rev->state));
 	rb_iv_set(self, "@branches", ary_from_toklist(&rev->branches));
 	rb_iv_set(self, "@next", str_from_tok2(rev->next));
+	if (rev->log != NULL)
+		rb_iv_set(self, "@log", str_from_tok(rev->log));
 	return self;
 }
 
