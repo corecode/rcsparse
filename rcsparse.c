@@ -960,7 +960,7 @@ rcsrevfromsym(struct rcsfile *rcs, const char *sym)
 	size_t dotcount;
 	int issym, searchbranch;
 
-	if (rcsparseadmin(rcs) < 0)
+	if (rcsparsetree(rcs) < 0)
 		return NULL;
 
 	/* Handle special symbol "HEAD" */
