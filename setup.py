@@ -6,6 +6,6 @@ setup(
     name = "rcsparse",
     version = "0.1",
     ext_modules = [
-        Extension("rcsparse", ["rcsparsemodule.c", "rcsparse.c"])
+        Extension("rcsparse", ["py-rcsparse.c", "rcsparse.c"])
     ]
 )
