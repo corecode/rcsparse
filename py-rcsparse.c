@@ -552,7 +552,7 @@ pyrcsfile_getstr(struct pyrcsfile *self, void *closure)
 	struct rcstoken *tok;
 	struct rcsadmin *adm;
 
-	if (rcsparsetree(self->rcs) < 0)
+	if (rcsparseadmin(self->rcs) < 0)
 		return PyErr_Format(PyExc_RuntimeError, "Error parsing");
 
 	adm = &self->rcs->admin;
