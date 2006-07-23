@@ -120,7 +120,7 @@ skipws(struct rcsfile *rcs)
 
 		break;
 	}
-	
+
 	return rcs->pos == rcs->end ? -1 : 0;
 }
 
@@ -163,7 +163,7 @@ parsestring(struct rcsfile *rcs, struct stringinfo **sip)
 			if (si != NULL) {
 				if (resizestrnfo(&si, si->pos + 2) < 0)
 					goto fail;
-				
+
 				si->lines[si->pos].len = rcs->pos - si->lines[si->pos].str + 1;
 				si->pos++;
 				si->lines[si->pos].str = rcs->pos + 1;
@@ -236,7 +236,7 @@ parsetoken(struct rcsfile *rcs)
 		rcs->pos++;
 		tok->len = 1;
 		return tok;
-		
+
 	case '@':
 		return parsestring(rcs, NULL);
 	}
@@ -1035,7 +1035,7 @@ rcsrevfromsym(struct rcsfile *rcs, const char *sym)
 
 		searchbranch = 1;
 	}
-	
+
 	findrev.rev = &findtok;
 	rev = RB_FIND(rcsrevtree, &rcs->admin.revs, &findrev);
 	if (rev == NULL)
@@ -1071,7 +1071,7 @@ rcsrevfromsym(struct rcsfile *rcs, const char *sym)
 			findrev.rev = rev->next;
 		}
 	}
-	
+
 	if (dotcount == 0) {
 		for (;;) {
 			if (rev->rev->len > branchtok.len + 1 &&
@@ -1204,8 +1204,8 @@ fail:
 		close(rcs->file);
 	if (rcs != NULL)
 		free(rcs);
-	
-	return NULL;	
+
+	return NULL;
 }
 
 void
@@ -1253,7 +1253,7 @@ rcsclose(struct rcsfile *rcs)
 
 	while ((rev = RB_MIN(rcsrevtree, &rcs->admin.revs)) != NULL) {
 		RB_REMOVE(rcsrevtree, &rcs->admin.revs, rev);
-		
+
 		free(rev->rev);
 		free(rev->date);
 		free(rev->author);
