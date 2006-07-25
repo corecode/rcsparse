@@ -98,6 +98,7 @@ rb_rcsrev_new(struct rcsrev *rev)
 
 
 /* Definition of RCSFile {{{1 */
+/* Generic functions {{{2 */
 struct rb_rcsfile {
 	struct rcsfile *rf;
 #ifdef notyet
@@ -105,7 +106,6 @@ struct rb_rcsfile {
 #endif
 };
 
-/* Interface to admin fields {{{2 */
 static void
 rcsfile_free(struct rb_rcsfile *rb_rf)
 {
@@ -134,19 +134,31 @@ static VALUE
 rb_rcsfile_initialize(int argc, VALUE *argv, VALUE self)
 {
 	VALUE fname;
-	struct rcsfile *rf;
 	struct rb_rcsfile *rb_rf;
 
 	Data_Get_Struct(self, struct rb_rcsfile, rb_rf);
 	rb_scan_args(argc, argv, "1", &fname);
 	SafeStringValue(fname);
-	rf = rcsopen(RSTRING(fname)->ptr);
-	if (rf == NULL)
+	rb_rf->rf = rcsopen(RSTRING(fname)->ptr);
+	if (rb_rf->rf == NULL)
 		rb_sys_fail(RSTRING(fname)->ptr);
-	rb_rf->rf = rf;
 	return self;
 }
 
+static VALUE
+rb_rcsfile_close(VALUE self)
+{
+	struct rb_rcsfile *rb_rf;
+
+	Data_Get_Struct(self, struct rb_rcsfile, rb_rf);
+	if (rb_rf->rf == NULL)
+		rb_raise(rb_eIOError, "closed file");
+	rcsclose(rb_rf->rf);
+	rb_rf->rf = NULL;
+	return Qnil;
+}
+
+/* Interface to admin fields {{{2 */
 static struct rcsadmin *
 rb_rcsfile_admin_generic(VALUE self)
 {
@@ -508,6 +520,7 @@ Init_rcsparse(void)
 	rb_cRCSFile = rb_define_class("RCSFile", rb_cObject);
 	rb_define_alloc_func(rb_cRCSFile, rb_rcsfile_s_alloc);
 	rb_define_method(rb_cRCSFile, "initialize", rb_rcsfile_initialize, -1);
+	rb_define_method(rb_cRCSFile, "close", rb_rcsfile_close, 0);
 	rb_define_method(rb_cRCSFile, "head", rb_rcsfile_head, 0);
 	rb_define_method(rb_cRCSFile, "branch", rb_rcsfile_branch, 0);
 	rb_define_method(rb_cRCSFile, "access", rb_rcsfile_access, 0);

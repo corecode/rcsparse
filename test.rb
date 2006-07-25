@@ -29,4 +29,20 @@ class BasicsTest < Test::Unit::TestCase
     assert(@f['1.121'].date == Time.parse('Tue Jan 04 15:12:12 CET 2000'),
 	'Rev time (4-digit year)')
   end
+
+  def test_close
+    @f.close
+    begin
+      @f.head
+      assert(false, "Read file after close")
+    rescue IOError
+      assert(true)
+    end
+    # restore for teardown
+    @f = RCSFile.new('test,v')
+  end
+
+  def teardown
+    @f.close
+  end
 end
