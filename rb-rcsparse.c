@@ -5,9 +5,7 @@
 
 /* Global Variables {{{1 */
 static VALUE rb_cRCSFile;
-static VALUE rb_cTokMap;
 static VALUE rb_cRev;
-static VALUE rb_cRevTree;
 
 
 /* Gobal Helper Functions {{{1 */
@@ -44,210 +42,6 @@ static void
 rb_attr2(VALUE klass, const char *attr, int read, int write)
 {
 	rb_attr(klass, rb_intern(attr), read, write, 0);
-}
-
-
-/* Definition of RCSFile::TokMap {{{1 */
-struct rb_tokmap {
-	VALUE rb_rf;
-	struct rcstokmap *map;
-};
-
-static void
-rb_tokmap_mark(struct rb_tokmap *tm)
-{
-	rb_gc_mark(tm->rb_rf);
-}
-
-static VALUE
-rb_tokmap_new(VALUE rb_rf, struct rcstokmap *map)
-{
-	struct rb_tokmap *rb_tm;
-	VALUE ret;
-
-	ret = Data_Make_Struct(rb_cTokMap, struct rb_tokmap,
-				rb_tokmap_mark, free, rb_tm);
-	rb_tm->rb_rf = rb_rf;
-	rb_tm->map = map;
-	return ret;
-}
-
-static VALUE
-rb_tokmap_aref(VALUE self, VALUE index)
-{
-	struct rb_tokmap *rb_tm;
-	struct rcstokpair s, *f;
-	struct rcstoken st;
-
-	Data_Get_Struct(self, struct rb_tokmap, rb_tm);
-	StringValue(index);
-	s.first = &st;
-	st.str = RSTRING(index)->ptr;
-	st.len = RSTRING(index)->len;
-	f = RB_FIND(rcstokmap, rb_tm->map, &s);
-	if (f == NULL)
-		return Qnil;
-	else
-		return str_from_tok(f->second);
-}
-
-
-static void
-tokmap_foreach(VALUE self, void (*it)(struct rcstokpair *, VALUE), VALUE arg)
-{
-	struct rb_tokmap *rb_tm;
-	struct rcstokpair *i;
-
-	Data_Get_Struct(self, struct rb_tokmap, rb_tm);
-	RB_FOREACH(i, rcstokmap, rb_tm->map)
-		it(i, arg);
-}
-
-static void
-tokmap_each_i(struct rcstokpair *p, VALUE dummy)
-{
-	rb_yield(rb_assoc_new(str_from_tok(p->first), str_from_tok(p->second)));
-}
-
-static VALUE
-rb_tokmap_each(VALUE self)
-{
-	tokmap_foreach(self, tokmap_each_i, 0);
-	return self;
-}
-
-static void
-tokmap_each_pair_i(struct rcstokpair *p, VALUE dummy)
-{
-	rb_yield_values(2, str_from_tok(p->first), str_from_tok(p->second));
-}
-
-static VALUE
-rb_tokmap_each_pair(VALUE self)
-{
-	tokmap_foreach(self, tokmap_each_pair_i, 0);
-	return self;
-}
-
-static void
-tokmap_each_key_i(struct rcstokpair *p, VALUE dummy)
-{
-	rb_yield(str_from_tok(p->first));
-}
-
-static VALUE
-rb_tokmap_each_key(VALUE self)
-{
-	tokmap_foreach(self, tokmap_each_key_i, 0);
-	return self;
-}
-
-static void
-tokmap_each_value_i(struct rcstokpair *p, VALUE dummy)
-{
-	rb_yield(str_from_tok(p->second));
-}
-
-static VALUE
-rb_tokmap_each_value(VALUE self)
-{
-	tokmap_foreach(self, tokmap_each_value_i, 0);
-	return self;
-}
-
-static VALUE
-rb_tokmap_empty_p(VALUE self)
-{
-	struct rb_tokmap *rb_tm;
-
-	Data_Get_Struct(self, struct rb_tokmap, rb_tm);
-	if (RB_EMPTY(rb_tm->map))
-		return Qtrue;
-	else
-		return Qfalse;
-}
-
-static VALUE
-rb_tokmap_key_p(VALUE self, VALUE index)
-{
-	struct rb_tokmap *rb_tm;
-	struct rcstokpair s, *f;
-	struct rcstoken st;
-
-	Data_Get_Struct(self, struct rb_tokmap, rb_tm);
-	StringValue(index);
-	s.first = &st;
-	st.str = RSTRING(index)->ptr;
-	st.len = RSTRING(index)->len;
-	f = RB_FIND(rcstokmap, rb_tm->map, &s);
-	if (f == NULL)
-		return Qfalse;
-	else
-		return Qtrue;
-}
-
-static void
-tokmap_keys_i(struct rcstokpair *p, VALUE ary)
-{
-	rb_ary_push(ary, str_from_tok(p->first));
-}
-
-static VALUE
-rb_tokmap_keys(VALUE self)
-{
-	VALUE ary;
-
-	ary = rb_ary_new();
-	tokmap_foreach(self, tokmap_keys_i, ary);
-	return ary;
-}
-
-static void
-tokmap_values_i(struct rcstokpair *p, VALUE ary)
-{
-	rb_ary_push(ary, str_from_tok(p->second));
-}
-
-static VALUE
-rb_tokmap_values(VALUE self)
-{
-	VALUE ary;
-
-	ary = rb_ary_new();
-	tokmap_foreach(self, tokmap_values_i, ary);
-	return ary;
-}
-
-static void
-tokmap_to_a_i(struct rcstokpair *p, VALUE ary)
-{
-	rb_ary_push(ary, rb_assoc_new(str_from_tok(p->first), str_from_tok(p->second)));
-}
-
-static VALUE
-rb_tokmap_to_a(VALUE self)
-{
-	VALUE ary;
-
-	ary = rb_ary_new();
-	tokmap_foreach(self, tokmap_to_a_i, ary);
-	return ary;
-}
-
-static void
-tokmap_to_hash_i(struct rcstokpair *p, VALUE hash)
-{
-	rb_hash_aset(hash, str_from_tok(p->first), str_from_tok(p->second));
-}
-
-static VALUE
-rb_tokmap_to_hash(VALUE self)
-{
-	VALUE hash;
-
-	hash = rb_hash_new();
-	tokmap_foreach(self, tokmap_to_hash_i, hash);
-	return hash;
 }
 
 
@@ -303,211 +97,8 @@ rb_rcsrev_new(struct rcsrev *rev)
 }
 
 
-/* Definition of RCSFile::RevTree {{{1 */
-struct rb_revtree {
-	VALUE rb_rf;
-	struct rcsrevtree *tree;
-};
-
-static void
-rb_revtree_mark(struct rb_revtree *tm)
-{
-	rb_gc_mark(tm->rb_rf);
-}
-
-static VALUE
-rb_revtree_new(VALUE rb_rf, struct rcsrevtree *tree)
-{
-	struct rb_revtree *rb_tm;
-	VALUE ret;
-
-	ret = Data_Make_Struct(rb_cRevTree, struct rb_revtree,
-				rb_revtree_mark, free, rb_tm);
-	rb_tm->rb_rf = rb_rf;
-	rb_tm->tree = tree;
-	return ret;
-}
-
-static VALUE
-rb_revtree_aref(VALUE self, VALUE index)
-{
-	struct rb_revtree *rb_tm;
-	struct rcsrev s, *f;
-	struct rcstoken st;
-
-	Data_Get_Struct(self, struct rb_revtree, rb_tm);
-	StringValue(index);
-	s.rev = &st;
-	st.str = RSTRING(index)->ptr;
-	st.len = RSTRING(index)->len;
-	f = RB_FIND(rcsrevtree, rb_tm->tree, &s);
-	if (f == NULL)
-		return Qnil;
-	else
-		return rb_rcsrev_new(f);
-}
-
-
-static void
-revtree_foreach(VALUE self, void (*it)(struct rcsrev *, VALUE), VALUE arg)
-{
-	struct rb_revtree *rb_tm;
-	struct rcsrev *i;
-
-	Data_Get_Struct(self, struct rb_revtree, rb_tm);
-	RB_FOREACH(i, rcsrevtree, rb_tm->tree)
-		it(i, arg);
-}
-
-static void
-revtree_each_i(struct rcsrev *r, VALUE dummy)
-{
-	rb_yield(rb_assoc_new(str_from_tok(r->rev), rb_rcsrev_new(r)));
-}
-
-static VALUE
-rb_revtree_each(VALUE self)
-{
-	revtree_foreach(self, revtree_each_i, 0);
-	return self;
-}
-
-static void
-revtree_each_pair_i(struct rcsrev *r, VALUE dummy)
-{
-	rb_yield_values(2, str_from_tok(r->rev), rb_rcsrev_new(r));
-}
-
-static VALUE
-rb_revtree_each_pair(VALUE self)
-{
-	revtree_foreach(self, revtree_each_pair_i, 0);
-	return self;
-}
-
-static void
-revtree_each_key_i(struct rcsrev *r, VALUE dummy)
-{
-	rb_yield(str_from_tok(r->rev));
-}
-
-static VALUE
-rb_revtree_each_key(VALUE self)
-{
-	revtree_foreach(self, revtree_each_key_i, 0);
-	return self;
-}
-
-static void
-revtree_each_value_i(struct rcsrev *r, VALUE dummy)
-{
-	rb_yield(rb_rcsrev_new(r));
-}
-
-static VALUE
-rb_revtree_each_value(VALUE self)
-{
-	revtree_foreach(self, revtree_each_value_i, 0);
-	return self;
-}
-
-static VALUE
-rb_revtree_empty_p(VALUE self)
-{
-	struct rb_revtree *rb_tm;
-
-	Data_Get_Struct(self, struct rb_revtree, rb_tm);
-	if (RB_EMPTY(rb_tm->tree))
-		return Qtrue;
-	else
-		return Qfalse;
-}
-
-static VALUE
-rb_revtree_key_p(VALUE self, VALUE index)
-{
-	struct rb_revtree *rb_tm;
-	struct rcsrev s, *f;
-	struct rcstoken st;
-
-	Data_Get_Struct(self, struct rb_revtree, rb_tm);
-	StringValue(index);
-	s.rev = &st;
-	st.str = RSTRING(index)->ptr;
-	st.len = RSTRING(index)->len;
-	f = RB_FIND(rcsrevtree, rb_tm->tree, &s);
-	if (f == NULL)
-		return Qfalse;
-	else
-		return Qtrue;
-}
-
-static void
-revtree_keys_i(struct rcsrev *r, VALUE ary)
-{
-	rb_ary_push(ary, str_from_tok(r->rev));
-}
-
-static VALUE
-rb_revtree_keys(VALUE self)
-{
-	VALUE ary;
-
-	ary = rb_ary_new();
-	revtree_foreach(self, revtree_keys_i, ary);
-	return ary;
-}
-
-static void
-revtree_values_i(struct rcsrev *r, VALUE ary)
-{
-	rb_ary_push(ary, rb_rcsrev_new(r));
-}
-
-static VALUE
-rb_revtree_values(VALUE self)
-{
-	VALUE ary;
-
-	ary = rb_ary_new();
-	revtree_foreach(self, revtree_values_i, ary);
-	return ary;
-}
-
-static void
-revtree_to_a_i(struct rcsrev *r, VALUE ary)
-{
-	rb_ary_push(ary, rb_assoc_new(str_from_tok(r->rev), rb_rcsrev_new(r)));
-}
-
-static VALUE
-rb_revtree_to_a(VALUE self)
-{
-	VALUE ary;
-
-	ary = rb_ary_new();
-	revtree_foreach(self, revtree_to_a_i, ary);
-	return ary;
-}
-
-static void
-revtree_to_hash_i(struct rcsrev *r, VALUE hash)
-{
-	rb_hash_aset(hash, str_from_tok(r->rev), rb_rcsrev_new(r));
-}
-
-static VALUE
-rb_revtree_to_hash(VALUE self)
-{
-	VALUE hash;
-
-	hash = rb_hash_new();
-	revtree_foreach(self, revtree_to_hash_i, hash);
-	return hash;
-}
-
-
 /* Definition of RCSFile {{{1 */
+/* Interface to fields {{{2 */
 static void
 rcsfile_free(struct rcsfile *rf)
 {
@@ -619,25 +210,19 @@ rb_rcsfile_strict(VALUE self)
 static VALUE
 rb_rcsfile_symbols(VALUE self)
 {
+	/*
 	return rb_tokmap_new(self, &rb_rcsfile_admin_generic(self)->symbols);
+	*/
+	rb_raise(rb_eNotImpError, "not yet implemented");
 }
 
 static VALUE
 rb_rcsfile_locks(VALUE self)
 {
+	/*
 	return rb_tokmap_new(self, &rb_rcsfile_admin_generic(self)->locks);
-}
-
-static VALUE
-rb_rcsfile_revs(VALUE self)
-{
-	struct rcsfile *rf;
-
-	Data_Get_Struct(self, struct rcsfile, rf);
-	if (rcsparsetree(rf) < 0)
-		rb_raise(rb_eRuntimeError, "Cannot parse RCS file");
-
-	return rb_revtree_new(self, &rf->admin.revs);
+	*/
+	rb_raise(rb_eNotImpError, "not yet implemented");
 }
 
 static VALUE
@@ -702,6 +287,189 @@ rb_rcsfile_getlog(VALUE self, VALUE rev)
 	return ret;
 }
 
+/* Hash-like interface {{{2 */
+static struct rcsrevtree *
+rb_rcsfile_revs(VALUE self)
+{
+	struct rcsfile *rf;
+
+	Data_Get_Struct(self, struct rcsfile, rf);
+	if (rcsparsetree(rf) < 0)
+		rb_raise(rb_eRuntimeError, "Cannot parse RCS file");
+
+	return &rf->admin.revs;
+}
+
+static VALUE
+rb_revtree_aref(VALUE self, VALUE index)
+{
+	struct rcsrev s, *f;
+	struct rcstoken st;
+
+	StringValue(index);
+	s.rev = &st;
+	st.str = RSTRING(index)->ptr;
+	st.len = RSTRING(index)->len;
+	f = RB_FIND(rcsrevtree, rb_rcsfile_revs(self), &s);
+	if (f == NULL)
+		return Qnil;
+	else
+		return rb_rcsrev_new(f);
+}
+
+
+static void
+revtree_foreach(VALUE self, void (*it)(struct rcsrev *, VALUE), VALUE arg)
+{
+	struct rcsrev *i;
+
+	RB_FOREACH(i, rcsrevtree, rb_rcsfile_revs(self))
+		it(i, arg);
+}
+
+static void
+revtree_each_i(struct rcsrev *r, VALUE dummy)
+{
+	rb_yield(rb_assoc_new(str_from_tok(r->rev), rb_rcsrev_new(r)));
+}
+
+static VALUE
+rb_revtree_each(VALUE self)
+{
+	revtree_foreach(self, revtree_each_i, 0);
+	return self;
+}
+
+static void
+revtree_each_pair_i(struct rcsrev *r, VALUE dummy)
+{
+	rb_yield_values(2, str_from_tok(r->rev), rb_rcsrev_new(r));
+}
+
+static VALUE
+rb_revtree_each_pair(VALUE self)
+{
+	revtree_foreach(self, revtree_each_pair_i, 0);
+	return self;
+}
+
+static void
+revtree_each_key_i(struct rcsrev *r, VALUE dummy)
+{
+	rb_yield(str_from_tok(r->rev));
+}
+
+static VALUE
+rb_revtree_each_key(VALUE self)
+{
+	revtree_foreach(self, revtree_each_key_i, 0);
+	return self;
+}
+
+static void
+revtree_each_value_i(struct rcsrev *r, VALUE dummy)
+{
+	rb_yield(rb_rcsrev_new(r));
+}
+
+static VALUE
+rb_revtree_each_value(VALUE self)
+{
+	revtree_foreach(self, revtree_each_value_i, 0);
+	return self;
+}
+
+static VALUE
+rb_revtree_empty_p(VALUE self)
+{
+	if (RB_EMPTY(rb_rcsfile_revs(self)))
+		return Qtrue;
+	else
+		return Qfalse;
+}
+
+static VALUE
+rb_revtree_key_p(VALUE self, VALUE index)
+{
+	struct rcsrev s, *f;
+	struct rcstoken st;
+
+	StringValue(index);
+	s.rev = &st;
+	st.str = RSTRING(index)->ptr;
+	st.len = RSTRING(index)->len;
+	f = RB_FIND(rcsrevtree, rb_rcsfile_revs(self), &s);
+	if (f == NULL)
+		return Qfalse;
+	else
+		return Qtrue;
+}
+
+static void
+revtree_keys_i(struct rcsrev *r, VALUE ary)
+{
+	rb_ary_push(ary, str_from_tok(r->rev));
+}
+
+static VALUE
+rb_revtree_keys(VALUE self)
+{
+	VALUE ary;
+
+	ary = rb_ary_new();
+	revtree_foreach(self, revtree_keys_i, ary);
+	return ary;
+}
+
+static void
+revtree_values_i(struct rcsrev *r, VALUE ary)
+{
+	rb_ary_push(ary, rb_rcsrev_new(r));
+}
+
+static VALUE
+rb_revtree_values(VALUE self)
+{
+	VALUE ary;
+
+	ary = rb_ary_new();
+	revtree_foreach(self, revtree_values_i, ary);
+	return ary;
+}
+
+static void
+revtree_to_a_i(struct rcsrev *r, VALUE ary)
+{
+	rb_ary_push(ary, rb_assoc_new(str_from_tok(r->rev), rb_rcsrev_new(r)));
+}
+
+static VALUE
+rb_revtree_to_a(VALUE self)
+{
+	VALUE ary;
+
+	ary = rb_ary_new();
+	revtree_foreach(self, revtree_to_a_i, ary);
+	return ary;
+}
+
+static void
+revtree_to_hash_i(struct rcsrev *r, VALUE hash)
+{
+	rb_hash_aset(hash, str_from_tok(r->rev), rb_rcsrev_new(r));
+}
+
+static VALUE
+rb_revtree_to_hash(VALUE self)
+{
+	VALUE hash;
+
+	hash = rb_hash_new();
+	revtree_foreach(self, revtree_to_hash_i, hash);
+	return hash;
+}
+
+
 
 /* Module initialization {{{1 */
 void
@@ -718,29 +486,27 @@ Init_rcsparse(void)
 	rb_define_method(rb_cRCSFile, "strict", rb_rcsfile_strict, 0);
 	rb_define_method(rb_cRCSFile, "comment", rb_rcsfile_comment, 0);
 	rb_define_method(rb_cRCSFile, "expand", rb_rcsfile_expand, 0);
-	rb_define_method(rb_cRCSFile, "revs", rb_rcsfile_revs, 0);
 	rb_define_method(rb_cRCSFile, "desc", rb_rcsfile_desc, 0);
 	rb_define_method(rb_cRCSFile, "checkout", rb_rcsfile_checkout, -1);
 	rb_define_method(rb_cRCSFile, "resolve_sym", rb_rcsfile_resolve_sym, -1);
 	rb_define_method(rb_cRCSFile, "getlog", rb_rcsfile_getlog, 1);
 
-	rb_cTokMap = rb_define_class_under(rb_cRCSFile, "TokMap", rb_cObject);
-	rb_include_module(rb_cTokMap, rb_mEnumerable);
-	rb_undef_alloc_func(rb_cTokMap);
-	rb_define_method(rb_cTokMap, "[]", rb_tokmap_aref, 1);
-	rb_define_method(rb_cTokMap, "each", rb_tokmap_each, 0);
-	rb_define_method(rb_cTokMap, "each_pair", rb_tokmap_each_pair, 0);
-	rb_define_method(rb_cTokMap, "each_key", rb_tokmap_each_key, 0);
-	rb_define_method(rb_cTokMap, "each_value", rb_tokmap_each_value, 0);
-	rb_define_method(rb_cTokMap, "empty?", rb_tokmap_empty_p, 0);
-	rb_define_method(rb_cTokMap, "key?", rb_tokmap_key_p, 1);
-	rb_define_method(rb_cTokMap, "has_key?", rb_tokmap_key_p, 1);
-	rb_define_method(rb_cTokMap, "include?", rb_tokmap_key_p, 1);
-	rb_define_method(rb_cTokMap, "member?", rb_tokmap_key_p, 1);
-	rb_define_method(rb_cTokMap, "keys", rb_tokmap_keys, 0);
-	rb_define_method(rb_cTokMap, "values", rb_tokmap_values, 0);
-	rb_define_method(rb_cTokMap, "to_a", rb_tokmap_to_a, 0);
-	rb_define_method(rb_cTokMap, "to_hash", rb_tokmap_to_hash, 0);
+	/* Hash-like interface to revs */
+	rb_include_module(rb_cRCSFile, rb_mEnumerable);
+	rb_define_method(rb_cRCSFile, "[]", rb_revtree_aref, 1);
+	rb_define_method(rb_cRCSFile, "each", rb_revtree_each, 0);
+	rb_define_method(rb_cRCSFile, "each_pair", rb_revtree_each_pair, 0);
+	rb_define_method(rb_cRCSFile, "each_key", rb_revtree_each_key, 0);
+	rb_define_method(rb_cRCSFile, "each_value", rb_revtree_each_value, 0);
+	rb_define_method(rb_cRCSFile, "empty?", rb_revtree_empty_p, 0);
+	rb_define_method(rb_cRCSFile, "key?", rb_revtree_key_p, 1);
+	rb_define_method(rb_cRCSFile, "has_key?", rb_revtree_key_p, 1);
+	rb_define_method(rb_cRCSFile, "include?", rb_revtree_key_p, 1);
+	rb_define_method(rb_cRCSFile, "member?", rb_revtree_key_p, 1);
+	rb_define_method(rb_cRCSFile, "keys", rb_revtree_keys, 0);
+	rb_define_method(rb_cRCSFile, "values", rb_revtree_values, 0);
+	rb_define_method(rb_cRCSFile, "to_a", rb_revtree_to_a, 0);
+	rb_define_method(rb_cRCSFile, "to_hash", rb_revtree_to_hash, 0);
 
 	rb_cRev = rb_define_class_under(rb_cRCSFile, "Rev", rb_cObject);
 	rb_attr2(rb_cRev, "rev", 1, 0);
@@ -750,22 +516,4 @@ Init_rcsparse(void)
 	rb_attr2(rb_cRev, "branches", 1, 0);
 	rb_attr2(rb_cRev, "next", 1, 0);
 	rb_attr2(rb_cRev, "log", 1, 1);
-
-	rb_cRevTree = rb_define_class_under(rb_cRCSFile, "RevTree", rb_cObject);
-	rb_include_module(rb_cRevTree, rb_mEnumerable);
-	rb_undef_alloc_func(rb_cRevTree);
-	rb_define_method(rb_cRevTree, "[]", rb_revtree_aref, 1);
-	rb_define_method(rb_cRevTree, "each", rb_revtree_each, 0);
-	rb_define_method(rb_cRevTree, "each_pair", rb_revtree_each_pair, 0);
-	rb_define_method(rb_cRevTree, "each_key", rb_revtree_each_key, 0);
-	rb_define_method(rb_cRevTree, "each_value", rb_revtree_each_value, 0);
-	rb_define_method(rb_cRevTree, "empty?", rb_revtree_empty_p, 0);
-	rb_define_method(rb_cRevTree, "key?", rb_revtree_key_p, 1);
-	rb_define_method(rb_cRevTree, "has_key?", rb_revtree_key_p, 1);
-	rb_define_method(rb_cRevTree, "include?", rb_revtree_key_p, 1);
-	rb_define_method(rb_cRevTree, "member?", rb_revtree_key_p, 1);
-	rb_define_method(rb_cRevTree, "keys", rb_revtree_keys, 0);
-	rb_define_method(rb_cRevTree, "values", rb_revtree_values, 0);
-	rb_define_method(rb_cRevTree, "to_a", rb_revtree_to_a, 0);
-	rb_define_method(rb_cRevTree, "to_hash", rb_revtree_to_hash, 0);
 }

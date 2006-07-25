@@ -21,13 +21,12 @@ class BasicsTest < Test::Unit::TestCase
   end
 
   def test_revs
-    r = @f.revs
-    assert(r.key?('1.1'), 'Rev lookup')
-    assert(!r.key?('1.500'), 'Rev lookup 2')
-    assert(r['1.1'] != nil, 'Rev lookup 3')
-    assert(r['1.120'].date == Time.parse('Thu Dec 30 11:31:21 CET 1999'),
+    assert(@f.key?('1.1'), 'Rev lookup')
+    assert(!@f.key?('1.500'), 'Rev lookup 2')
+    assert(@f['1.1'] != nil, 'Rev lookup 3')
+    assert(@f['1.120'].date == Time.parse('Thu Dec 30 11:31:21 CET 1999'),
 	'Positive rev time (2-digit year)')
-    assert(r['1.121'].date == Time.parse('Tue Jan 04 15:12:12 CET 2000'),
+    assert(@f['1.121'].date == Time.parse('Tue Jan 04 15:12:12 CET 2000'),
 	'Rev time (4-digit year)')
   end
 end
