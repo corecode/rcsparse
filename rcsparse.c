@@ -960,19 +960,26 @@ rcsrevfromsym(struct rcsfile *rcs, const char *sym)
 	size_t dotcount;
 	int issym, searchbranch;
 
-	if (rcsparsetree(rcs) < 0)
+	/* To check head we only need admin info */
+	if (rcsparseadmin(rcs) < 0)
 		return NULL;
 
 	/* Handle special symbol "HEAD" */
 	if (sym == NULL || strcmp(sym, "HEAD") == 0) {
-		if (rcs->admin.branch != NULL)
+		if (rcs->admin.branch == NULL) {
+			tok = rcs->admin.head;
+			goto found;
+		} else {
 			findtok = *rcs->admin.branch;
-		else
-			findtok = *rcs->admin.head;
+		}
 	} else {
 		findtok.str = (char *)(unsigned long)sym;
 		findtok.len = strlen(sym);
 	}
+
+	/* We really need to wade in the revs, so parse them as well */
+	if (rcsparsetree(rcs) < 0)
+		return NULL;
 
 	dotcount = 0;
 	issym = 0;
@@ -1088,12 +1095,14 @@ rcsrevfromsym(struct rcsfile *rcs, const char *sym)
 				return NULL;
 		}
 	}
+	tok = rev->rev;
 
-	retrev = malloc(rev->rev->len + 1);
+found:
+	retrev = malloc(tok->len + 1);
 	if (retrev == NULL)
 		return NULL;
-	bcopy(rev->rev->str, retrev, rev->rev->len);
-	retrev[rev->rev->len] = '\0';
+	bcopy(tok->str, retrev, tok->len);
+	retrev[tok->len] = '\0';
 
 	return retrev;
 }
