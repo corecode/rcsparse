@@ -129,6 +129,7 @@ rcsfile_free(struct rb_rcsfile *rb_rf)
 static void
 rcsfile_mark(struct rb_rcsfile *rb_rf)
 {
+	rb_gc_mark(rb_rf->symbols);
 }
 
 static struct rb_rcsfile *
