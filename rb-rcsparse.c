@@ -121,6 +121,17 @@ rcsfile_mark(struct rb_rcsfile *rb_rf)
 {
 }
 
+static struct rb_rcsfile *
+rcsfile_data(VALUE self)
+{
+	struct rb_rcsfile *rb_rf;
+
+	Data_Get_Struct(self, struct rb_rcsfile, rb_rf);
+	if (rb_rf->rf == NULL)
+		rb_raise(rb_eIOError, "closed file");
+	return rb_rf;
+}
+
 static VALUE
 rb_rcsfile_s_alloc(VALUE klass)
 {
@@ -148,11 +159,8 @@ rb_rcsfile_initialize(int argc, VALUE *argv, VALUE self)
 static VALUE
 rb_rcsfile_close(VALUE self)
 {
-	struct rb_rcsfile *rb_rf;
+	struct rb_rcsfile *rb_rf = rcsfile_data(self);
 
-	Data_Get_Struct(self, struct rb_rcsfile, rb_rf);
-	if (rb_rf->rf == NULL)
-		rb_raise(rb_eIOError, "closed file");
 	rcsclose(rb_rf->rf);
 	rb_rf->rf = NULL;
 	return Qnil;
@@ -162,11 +170,8 @@ rb_rcsfile_close(VALUE self)
 static struct rcsadmin *
 rb_rcsfile_admin_generic(VALUE self)
 {
-	struct rb_rcsfile *rb_rf;
+	struct rb_rcsfile *rb_rf = rcsfile_data(self);
 
-	Data_Get_Struct(self, struct rb_rcsfile, rb_rf);
-	if (rb_rf->rf == NULL)
-		rb_raise(rb_eIOError, "closed file");
 	if (rcsparseadmin(rb_rf->rf) < 0)
 		rb_raise(rb_eRuntimeError, "Cannot parse RCS file");
 
@@ -262,16 +267,13 @@ rb_rcsfile_locks(VALUE self)
 static VALUE
 rb_rcsfile_checkout(int argc, VALUE *argv, VALUE self)
 {
+	struct rb_rcsfile *rb_rf = rcsfile_data(self);
 	VALUE rev;
 	VALUE ret;
-	struct rb_rcsfile *rb_rf;
 	size_t len;
 	const char *revstr = NULL;
 	char *data;
 
-	Data_Get_Struct(self, struct rb_rcsfile, rb_rf);
-	if (rb_rf->rf == NULL)
-		rb_raise(rb_eIOError, "closed file");
 	if (rb_scan_args(argc, argv, "01", &rev) == 1) {
 		StringValue(rev);
 		revstr = RSTRING(rev)->ptr;
@@ -287,15 +289,12 @@ rb_rcsfile_checkout(int argc, VALUE *argv, VALUE self)
 static VALUE
 rb_rcsfile_resolve_sym(int argc, VALUE *argv, VALUE self)
 {
+	struct rb_rcsfile *rb_rf = rcsfile_data(self);
 	VALUE sym;
 	VALUE ret;
-	struct rb_rcsfile *rb_rf;
 	const char *symstr = "HEAD";
 	char *rev;
 
-	Data_Get_Struct(self, struct rb_rcsfile, rb_rf);
-	if (rb_rf->rf == NULL)
-		rb_raise(rb_eIOError, "closed file");
 	if (rb_scan_args(argc, argv, "01", &sym) == 1) {
 		StringValue(sym);
 		symstr = RSTRING(sym)->ptr;
@@ -311,13 +310,10 @@ rb_rcsfile_resolve_sym(int argc, VALUE *argv, VALUE self)
 static VALUE
 rb_rcsfile_getlog(VALUE self, VALUE rev)
 {
+	struct rb_rcsfile *rb_rf = rcsfile_data(self);
 	VALUE ret;
-	struct rb_rcsfile *rb_rf;
 	char *data;
 
-	Data_Get_Struct(self, struct rb_rcsfile, rb_rf);
-	if (rb_rf->rf == NULL)
-		rb_raise(rb_eIOError, "closed file");
 	StringValue(rev);
 	data = rcsgetlog(rb_rf->rf, RSTRING(rev)->ptr);
 	if (data == NULL)
@@ -331,11 +327,8 @@ rb_rcsfile_getlog(VALUE self, VALUE rev)
 static struct rcsrevtree *
 rb_rcsfile_revs(VALUE self)
 {
-	struct rb_rcsfile *rb_rf;
+	struct rb_rcsfile *rb_rf = rcsfile_data(self);
 
-	Data_Get_Struct(self, struct rb_rcsfile, rb_rf);
-	if (rb_rf->rf == NULL)
-		rb_raise(rb_eIOError, "closed file");
 	if (rcsparsetree(rb_rf->rf) < 0)
 		rb_raise(rb_eRuntimeError, "Cannot parse RCS file");
 
