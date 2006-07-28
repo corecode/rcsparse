@@ -534,7 +534,7 @@ rb_revtree_to_hash(VALUE self)
 
 /* Module initialization {{{1 */
 void
-Init_rcsparse(void)
+Init_rcsfile(void)
 {
 	rb_cRCSFile = rb_define_class("RCSFile", rb_cObject);
 	rb_define_alloc_func(rb_cRCSFile, rb_rcsfile_s_alloc);

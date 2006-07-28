@@ -1,6 +1,6 @@
 require 'test/unit'
 require 'time'
-require 'rcsparse'
+require 'rcsfile'
 
 class BasicsTest < Test::Unit::TestCase
   def setup
