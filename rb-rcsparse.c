@@ -33,8 +33,7 @@ ary_from_toklist(struct rcstoklist *tl)
 
 	ret = rb_ary_new();
 	SLIST_FOREACH(t, tl, link)
-	    rb_ary_push(ret, str_from_tok(t));
-
+		rb_ary_push(ret, str_from_tok(t));
 	return ret;
 }
 
