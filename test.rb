@@ -46,6 +46,16 @@ class BasicsTest < Test::Unit::TestCase
     @f = RCSFile.new('test,v')
   end
 
+  def test_open
+    RCSFile.open('test,v') do |f|
+      assert(f.head == '1.472', 'open with block')
+    end
+
+    f = RCSFile.open('test,v')
+    assert(f.head == '1.472', 'open without block')
+    f.close
+  end
+
   def teardown
     @f.close
   end

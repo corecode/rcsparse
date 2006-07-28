@@ -177,6 +177,20 @@ rb_rcsfile_close(VALUE self)
 	return Qnil;
 }
 
+static VALUE
+rb_rcsfile_s_open(int argc, VALUE *argv, VALUE klass)
+{
+	VALUE obj;
+
+	obj = rb_rcsfile_s_alloc(klass);
+	obj = rb_rcsfile_initialize(argc, argv, obj);
+
+	if (rb_block_given_p())
+		return rb_ensure(rb_yield, obj, rb_rcsfile_close, obj);
+	else
+		return obj;
+}
+
 /* Interface to admin fields {{{2 */
 static struct rcsadmin *
 rb_rcsfile_admin_generic(VALUE self)
@@ -523,6 +537,7 @@ Init_rcsparse(void)
 {
 	rb_cRCSFile = rb_define_class("RCSFile", rb_cObject);
 	rb_define_alloc_func(rb_cRCSFile, rb_rcsfile_s_alloc);
+	rb_define_singleton_method(rb_cRCSFile, "open", rb_rcsfile_s_open, -1);
 	rb_define_method(rb_cRCSFile, "initialize", rb_rcsfile_initialize, -1);
 	rb_define_method(rb_cRCSFile, "close", rb_rcsfile_close, 0);
 	rb_define_method(rb_cRCSFile, "head", rb_rcsfile_head, 0);
