@@ -272,10 +272,7 @@ rb_rcsfile_symbols(VALUE self)
 static VALUE
 rb_rcsfile_locks(VALUE self)
 {
-	/*
-	return rb_tokmap_new(self, &rb_rcsfile_admin_generic(self)->locks);
-	*/
-	rb_raise(rb_eNotImpError, "not yet implemented");
+	return hash_from_tokmap(&rb_rcsfile_admin_generic(self)->locks);
 }
 
 static VALUE

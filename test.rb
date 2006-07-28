@@ -16,6 +16,10 @@ class BasicsTest < Test::Unit::TestCase
     assert(s['RELENG_4'] == '1.141.0.2', 'Symbol lookup')
   end
 
+  def test_locks
+    assert(@f.locks == {}, 'Locks')
+  end
+
   def test_resolve_sym
     assert(@f.resolve_sym('RELENG_4') == '1.141.2.70', 'Resolve sym')
   end
