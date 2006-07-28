@@ -38,6 +38,19 @@ ary_from_toklist(struct rcstoklist *tl)
 	return ret;
 }
 
+static VALUE
+hash_from_tokmap(struct rcstokmap *map)
+{
+	VALUE hash;
+	struct rcstokpair *p;
+
+	hash = rb_hash_new();
+	RB_FOREACH(p, rcstokmap, map)
+		rb_hash_aset(hash, str_from_tok(p->first),
+			     str_from_tok(p->second));
+	return hash;
+}
+
 static void
 rb_attr2(VALUE klass, const char *attr, int read, int write)
 {
@@ -101,9 +114,7 @@ rb_rcsrev_new(struct rcsrev *rev)
 /* Generic functions {{{2 */
 struct rb_rcsfile {
 	struct rcsfile *rf;
-#ifdef notyet
 	VALUE symbols;
-#endif
 };
 
 static void
@@ -153,6 +164,7 @@ rb_rcsfile_initialize(int argc, VALUE *argv, VALUE self)
 	rb_rf->rf = rcsopen(RSTRING(fname)->ptr);
 	if (rb_rf->rf == NULL)
 		rb_sys_fail(RSTRING(fname)->ptr);
+	rb_rf->symbols = Qnil;
 	return self;
 }
 
@@ -249,10 +261,13 @@ rb_rcsfile_strict(VALUE self)
 static VALUE
 rb_rcsfile_symbols(VALUE self)
 {
-	/*
-	return rb_tokmap_new(self, &rb_rcsfile_admin_generic(self)->symbols);
-	*/
-	rb_raise(rb_eNotImpError, "not yet implemented");
+	struct rb_rcsfile *rb_rf = rcsfile_data(self);
+
+	if (NIL_P(rb_rf->symbols)) {
+		rb_rf->symbols = hash_from_tokmap(
+		    &rb_rcsfile_admin_generic(self)->symbols);
+	}
+	return rb_rf->symbols;
 }
 
 static VALUE
