@@ -1,4 +1,5 @@
 #include <ruby.h>
+#include <time.h>
 
 #include "rcsparse.h"
 
