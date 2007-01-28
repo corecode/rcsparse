@@ -552,6 +552,30 @@ fail:
 	return ret;
 }
 
+static void
+rcsfreerev(struct rcsrev *rev)
+{
+	struct rcstoken *tok;
+
+	free(rev->rev);
+	free(rev->date);
+	free(rev->author);
+	if (rev->state != NULL)
+		free(rev->state);
+	if (rev->next != NULL)
+		free(rev->next);
+	while ((tok = SLIST_FIRST(&rev->branches)) != NULL) {
+		SLIST_REMOVE_HEAD(&rev->branches, link);
+		free(tok);
+	}
+	if (rev->commitid != NULL)
+		free(rev->commitid);
+	if (rev->log != NULL)
+		free(rev->log);
+
+	free(rev);
+}
+
 int
 rcsparseadmin(struct rcsfile *rcs)
 {
@@ -808,7 +832,7 @@ rcsparsetree(struct rcsfile *rcs)
 
 fail:
 	if (rev != NULL)
-		free(rev);
+		rcsfreerev(rev);
 
 	return -1;
 }
@@ -1273,24 +1297,7 @@ rcsclose(struct rcsfile *rcs)
 
 	while ((rev = RB_MIN(rcsrevtree, &rcs->admin.revs)) != NULL) {
 		RB_REMOVE(rcsrevtree, &rcs->admin.revs, rev);
-
-		free(rev->rev);
-		free(rev->date);
-		free(rev->author);
-		if (rev->state != NULL)
-			free(rev->state);
-		if (rev->next != NULL)
-			free(rev->next);
-		while ((tok = SLIST_FIRST(&rev->branches)) != NULL) {
-			SLIST_REMOVE_HEAD(&rev->branches, link);
-			free(tok);
-		}
-		if (rev->commitid != NULL)
-			free(rev->commitid);
-		if (rev->log != NULL)
-			free(rev->log);
-
-		free(rev);
+		rcsfreerev(rev);
 	}
 
 	munmap(rcs->data, rcs->size);
