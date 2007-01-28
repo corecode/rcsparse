@@ -36,6 +36,7 @@ struct rcsrev {
 	struct rcstoken	*state;
 	struct rcstoklist branches;
 	struct rcstoken	*next;
+	struct rcstoken *commitid;
 	struct rcstoken	*log;
 };
 

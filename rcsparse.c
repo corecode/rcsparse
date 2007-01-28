@@ -764,6 +764,17 @@ rcsparsetree(struct rcsfile *rcs)
 			if (expecttok(rcs, ';') < 0)
 				goto fail;
 		}
+		if (expecttokstr(rcs, "commitid") < 0) {
+			/* No hit, rewind */
+			rcs->pos = rcs->tok->str;
+		} else {
+			if (parsetoken(rcs) == NULL)
+				goto fail;
+			rev->commitid = rcs->tok;
+			rcs->tok = NULL;
+			if (expecttok(rcs, ';') < 0)
+				goto fail;
+		}
 
 		for (;;) {
 			if (parsetoken(rcs) == NULL)
@@ -1274,6 +1285,8 @@ rcsclose(struct rcsfile *rcs)
 			SLIST_REMOVE_HEAD(&rev->branches, link);
 			free(tok);
 		}
+		if (rev->commitid != NULL)
+			free(rev->commitid);
 		if (rev->log != NULL)
 			free(rev->log);
 

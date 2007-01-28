@@ -105,13 +105,14 @@ rcsrev2py(struct rcsrev *rev)
 
 #undef readdate
 
-	return Py_BuildValue("NNNNNN",
+	return Py_BuildValue("NNNNNNN",
 			rcstoken2pystr(rev->rev),
 			PyInt_FromLong(timegm(&tm)),
 			rcstoken2pystr(rev->author),
 			rcstoken2pystr(rev->state),
 			rcstoklist2py(&rev->branches),
-			rcstoken2pystr(rev->next));
+			rcstoken2pystr(rev->next),
+			rcstoken2pystr(rev->commitid));
 }
 
 static PyObject *
