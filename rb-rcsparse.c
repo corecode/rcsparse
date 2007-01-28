@@ -580,5 +580,6 @@ Init_rcsfile(void)
 	rb_attr2(rb_cRev, "state", 1, 0);
 	rb_attr2(rb_cRev, "branches", 1, 0);
 	rb_attr2(rb_cRev, "next", 1, 0);
+	rb_attr2(rb_cRev, "commitid", 1, 0);
 	rb_attr2(rb_cRev, "log", 1, 1);
 }
