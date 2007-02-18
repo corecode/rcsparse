@@ -79,6 +79,7 @@ rb_rcsrev_new(struct rcsrev *rev)
 	struct tm tm;
 	const char *month;
 	VALUE self;
+	VALUE date;
 
 	memset(&tm, 0, sizeof(&tm));
 	if (rev->date->len == 17) {
@@ -98,10 +99,16 @@ rb_rcsrev_new(struct rcsrev *rev)
 	readdate(month + 6, &tm.tm_hour, 2);
 	readdate(month + 9, &tm.tm_min, 2);
 	readdate(month + 12, &tm.tm_sec, 2);
+	date = rb_time_new(timegm(&tm), 0);
+	/*
+	 * rb_time_new returns a Time object in local time, so convert
+	 * it to GMT, what RCS/CVS uses everywhere.
+	 */
+	date = rb_funcall(date, rb_intern("gmtime"), 0);
 
 	self = rb_obj_alloc(rb_cRev);
 	rb_iv_set(self, "@rev", str_from_tok(rev->rev));
-	rb_iv_set(self, "@date", rb_time_new(timegm(&tm), 0));
+	rb_iv_set(self, "@date", date);
 	rb_iv_set(self, "@author", str_from_tok(rev->author));
 	rb_iv_set(self, "@state", str_from_tok2(rev->state));
 	rb_iv_set(self, "@branches", ary_from_toklist(&rev->branches));
