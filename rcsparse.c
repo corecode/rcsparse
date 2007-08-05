@@ -1325,23 +1325,36 @@ main(int argc, char **argv)
 	if (rcsparsetree(rcs) < 0)
 		return 2;
 
-	rev = rcsrevfromsym(rcs, argv[2]);
-	if (rev == NULL)
-		return 3;
+	if (argv[2] != NULL && strcmp(argv[2], "all") == 0) {
+		struct rcsrev *rrev;
 
-	log = rcsgetlog(rcs, rev);
-	if (log == NULL)
-		return 5;
-	printf("%s\n", log);
-	free(log);
+		RB_FOREACH(rrev, rcsrevtree, &rcs->admin.revs) {
+			rev = malloc(rrev->rev->len + 1);
+			memcpy(rev, rrev->rev->str, rrev->rev->len);
+			rev[rrev->rev->len] = 0;
+			buf = rcscheckout(rcs, rev, &len);
+			free(buf);
+			free(rev);
+		}
+	} else {
+		rev = rcsrevfromsym(rcs, argv[2]);
+		if (rev == NULL)
+			return 3;
 
-	buf = rcscheckout(rcs, rev, &len);
-	if (buf == NULL)
-		return 4;
-	fwrite(buf, 1, len, stdout);
-	free(buf);
+		log = rcsgetlog(rcs, rev);
+		if (log == NULL)
+			return 5;
+		printf("%s\n", log);
+		free(log);
 
-	free(rev);
+		buf = rcscheckout(rcs, rev, &len);
+		if (buf == NULL)
+			return 4;
+		fwrite(buf, 1, len, stdout);
+		free(buf);
+
+		free(rev);
+	}
 
 	rcsclose(rcs);
 
