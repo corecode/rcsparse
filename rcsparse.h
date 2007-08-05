@@ -43,6 +43,7 @@ struct rcsrev {
 	char		*logpos;
 	struct rcstoken	*log;
 	struct stringinfo *text;
+	struct stringinfo *rawtext;
 };
 
 struct rcsadmin {

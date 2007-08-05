@@ -586,6 +586,8 @@ rcsfreerev(struct rcsrev *rev)
 		free(rev->commitid);
 	if (rev->log != NULL)
 		free(rev->log);
+	if (rev->rawtext != NULL)
+		free(rev->rawtext);
 	if (rev->text != NULL)
 		free(rev->text);
 
@@ -858,7 +860,7 @@ rcsparsetext(struct rcsfile *rcs, struct rcsrev *rrev, struct rcsrev **nextrev)
 {
 	struct rcsrev searchrev;
 
-	if (rrev->text != NULL) {
+	if (rrev->rawtext != NULL || rrev->text != NULL) {
 		if (rrev->next != NULL) {
 			searchrev.rev = rrev->next;
 			*nextrev = RB_FIND(rcsrevtree, &rcs->admin.revs, &searchrev);
@@ -894,7 +896,7 @@ rcsparsetext(struct rcsfile *rcs, struct rcsrev *rrev, struct rcsrev **nextrev)
 			;
 	}
 
-	if (parsestring(rcs, &rrev->text) == NULL)
+	if (parsestring(rcs, &rrev->rawtext) == NULL)
 		return -1;
 
 	if (parsetoken(rcs) == NULL)
@@ -915,6 +917,7 @@ char *
 rcscheckout(struct rcsfile *rcs, const char *revstr, size_t *len)
 {
 	struct rcsrev searchrev;
+	struct rcstoken searchtok;
 	struct rcsrev *currcsrev, *nextrcsrev;
 	struct stringinfo *curtext;
 	struct rcstoken *nextrev;
@@ -933,6 +936,17 @@ rcscheckout(struct rcsfile *rcs, const char *revstr, size_t *len)
 	rev = rcsrevfromsym(rcs, revstr);
 	if (rev == NULL)
 		goto fail;
+
+	searchtok.str = rev;
+	searchtok.len = strlen(rev);
+	searchrev.rev = &searchtok;
+	currcsrev = RB_FIND(rcsrevtree, &rcs->admin.revs, &searchrev);
+	if (currcsrev == NULL)
+		goto fail;
+
+	curtext = currcsrev->text;
+	if (curtext != NULL)
+		goto done;
 
 	branchrev = strdup(rev);
 	if (branchrev == NULL)
@@ -966,13 +980,24 @@ rcscheckout(struct rcsfile *rcs, const char *revstr, size_t *len)
 		if (rcsparsetext(rcs, currcsrev, &nextrcsrev) < 0)
 			goto fail;
 
-		if (curtext != NULL && !tokeqtok(currcsrev->rev, nextrev))
-			continue;
-
 		if (curtext == NULL) {
-			curtext = copystrnfo(currcsrev->text);
+			curtext = currcsrev->rawtext;
 		} else {
-			applydelta(&curtext, currcsrev->text);
+			if (!tokeqtok(currcsrev->rev, nextrev))
+				continue;
+
+			if (currcsrev->text) {
+				/* Was expanded before */
+				curtext = currcsrev->text;
+			} else {
+				currcsrev->text = copystrnfo(curtext);
+				if (currcsrev->text == NULL)
+					goto fail;
+				applydelta(&currcsrev->text, currcsrev->rawtext);
+				free(currcsrev->rawtext);
+				currcsrev->rawtext = NULL;
+				curtext = currcsrev->text;
+			}
 		}
 
 		if (tokeqstr(currcsrev->rev, rev))
@@ -1007,6 +1032,7 @@ rcscheckout(struct rcsfile *rcs, const char *revstr, size_t *len)
 	if (currcsrev == NULL)
 		goto fail;
 
+done:
 	if (tokeqstr(currcsrev->state, "dead")) {
 		/* TODO: optimize this case */
 		retbuf = strdup("");
@@ -1017,8 +1043,6 @@ rcscheckout(struct rcsfile *rcs, const char *revstr, size_t *len)
 	}
 
 fail:
-	if (curtext != NULL)
-		free(curtext);
 	if (rev != NULL)
 		free(rev);
 
@@ -1375,6 +1399,8 @@ main(int argc, char **argv)
 			rev = malloc(rrev->rev->len + 1);
 			memcpy(rev, rrev->rev->str, rrev->rev->len);
 			rev[rrev->rev->len] = 0;
+			log = rcsgetlog(rcs, rev);
+			free(log);
 			buf = rcscheckout(rcs, rev, &len);
 			free(buf);
 			free(rev);
