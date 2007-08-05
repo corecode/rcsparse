@@ -4,6 +4,9 @@
 #include "queue.h"
 #include "tree.h"
 
+
+struct stringinfo;
+
 RB_HEAD(rcsrevtree, rcsrev);
 RB_HEAD(rcstokmap, rcstokpair);
 SLIST_HEAD(rcstoklist, rcstoken);
@@ -37,7 +40,9 @@ struct rcsrev {
 	struct rcstoklist branches;
 	struct rcstoken	*next;
 	struct rcstoken *commitid;
+	char		*logpos;
 	struct rcstoken	*log;
+	struct stringinfo *text;
 };
 
 struct rcsadmin {
