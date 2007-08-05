@@ -732,6 +732,7 @@ rcsparseadmin(struct rcsfile *rcs)
 int
 rcsparsetree(struct rcsfile *rcs)
 {
+	struct rcsrev searchrev;
 	struct rcsrev *rev = NULL;
 
 	if (rcs->deltapos != NULL)
@@ -846,6 +847,24 @@ rcsparsetree(struct rcsfile *rcs)
 
 	rcs->deltapos = rcs->pos;
 
+	/* There are empty RCS files around */
+	if (rcs->admin.head == NULL)
+		return 0;
+
+	if (parsetoken(rcs) == NULL)
+		goto fail;
+	if ((rcs->tok->type & ~TOK_NUM) != 0)
+		goto fail;
+	if (!tokeqtok(rcs->tok, rcs->admin.head))
+		goto fail;
+
+	searchrev.rev = rcs->tok;
+	rev = RB_FIND(rcsrevtree, &rcs->admin.revs, &searchrev);
+	if (rev == NULL)
+		goto fail;
+
+	rev->logpos = rcs->pos;
+
 	return 0;
 
 fail:
@@ -856,19 +875,12 @@ fail:
 }
 
 static int
-rcsparsetext(struct rcsfile *rcs, struct rcsrev *rrev, struct rcsrev **nextrev)
+rcsparsetext(struct rcsfile *rcs, struct rcsrev *rrev)
 {
 	struct rcsrev searchrev;
 
-	if (rrev->rawtext != NULL || rrev->text != NULL) {
-		if (rrev->next != NULL) {
-			searchrev.rev = rrev->next;
-			*nextrev = RB_FIND(rcsrevtree, &rcs->admin.revs, &searchrev);
-		} else {
-			*nextrev = NULL;
-		}
+	if (rrev->log != NULL)
 		return 0;
-	}
 
 	if (rrev->logpos == NULL)
 		return -1;
@@ -905,11 +917,11 @@ rcsparsetext(struct rcsfile *rcs, struct rcsrev *rrev, struct rcsrev **nextrev)
 		return -1;
 
 	searchrev.rev = rcs->tok;
-	*nextrev = RB_FIND(rcsrevtree, &rcs->admin.revs, &searchrev);
-	if (*nextrev == NULL)
+	rrev->nextlog = RB_FIND(rcsrevtree, &rcs->admin.revs, &searchrev);
+	if (rrev->nextlog == NULL)
 		return (-1);
 
-	(*nextrev)->logpos = rcs->pos;
+	rrev->nextlog->logpos = rcs->pos;
 	return 0;
 }
 
@@ -918,7 +930,7 @@ rcscheckout(struct rcsfile *rcs, const char *revstr, size_t *len)
 {
 	struct rcsrev searchrev;
 	struct rcstoken searchtok;
-	struct rcsrev *currcsrev, *nextrcsrev;
+	struct rcsrev *currcsrev;
 	struct stringinfo *curtext;
 	struct rcstoken *nextrev;
 	char *branchrev, *tmpstr;
@@ -927,7 +939,6 @@ rcscheckout(struct rcsfile *rcs, const char *revstr, size_t *len)
 	if (rcsparsetree(rcs) < 0)
 		return NULL;
 
-	nextrcsrev = NULL;
 	curtext = NULL;
 	nextrev = NULL;
 	branchrev = NULL;
@@ -962,22 +973,8 @@ rcscheckout(struct rcsfile *rcs, const char *revstr, size_t *len)
 	if (currcsrev == NULL)
 		goto fail;
 
-	if (currcsrev->logpos == 0) {
-		rcs->pos = rcs->deltapos;
-
-		if (parsetoken(rcs) == NULL)
-			goto fail;
-		if ((rcs->tok->type & ~TOK_NUM) != 0)
-			goto fail;
-
-		if (!tokeqtok(rcs->tok, rcs->admin.head))
-			goto fail;
-
-		currcsrev->logpos = rcs->pos;
-	}
-
-	for (; currcsrev != NULL; currcsrev = nextrcsrev) {
-		if (rcsparsetext(rcs, currcsrev, &nextrcsrev) < 0)
+	for (; currcsrev != NULL; currcsrev = currcsrev->nextlog) {
+		if (rcsparsetext(rcs, currcsrev) < 0)
 			goto fail;
 
 		if (curtext == NULL) {
@@ -1226,54 +1223,24 @@ rcsgetlog(struct rcsfile *rcs, const char *logrev)
 	if (rev == NULL)
 		return NULL;
 
-	if (rev->log == NULL) {
-		rcs->pos = rcs->deltapos;
+	if (rev->log != NULL)
+		goto done;
 
-		for (;;) {
-			if (parsetoken(rcs) == NULL)
-				return NULL;
-			if ((rcs->tok->type & ~TOK_NUM) != 0)
-				return NULL;
+	findrev.rev = rcs->admin.head;
+	rev = RB_FIND(rcsrevtree, &rcs->admin.revs, &findrev);
 
-			findrev.rev = rcs->tok;
-			rev = RB_FIND(rcsrevtree, &rcs->admin.revs, &findrev);
-			if (rev == NULL)
-				return NULL;
-
-			if (expecttokstr(rcs, "log") < 0)
-				return NULL;
-
-			if (parsestring(rcs, NULL) == NULL)
-				return NULL;
-
-			if (rev->log == NULL) {
-				rev->log = rcs->tok;
-				rcs->tok = NULL;
-			}
-
-			if (tokeqstr(rev->rev, logrev))
-				break;
-
-			for (;;) {
-				if (parsetoken(rcs) == NULL)
-					return NULL;
-				if (tokeqstr(rcs->tok, "text"))
-					break;
-
-				while (opttok(rcs, ';') == 0)
-					;
-			}
-
-			if (parsestring(rcs, NULL) == NULL)
-				return NULL;
-
-			rev = NULL;
-		}
-
-		if (rev == NULL)
+	for (; rev != NULL; rev = rev->nextlog) {
+		if (rcsparsetext(rcs, rev) < 0)
 			return NULL;
+
+		if (tokeqstr(rev->rev, logrev))
+			break;
 	}
 
+	if (rev == NULL)
+		return NULL;
+
+done:
 	return tokstripat(rev->log);
 }
 
@@ -1378,9 +1345,10 @@ main(int argc, char **argv)
 {
 	struct rcsfile *rcs;
 	char *buf, *rev, *log;
+	int i;
 	size_t len;
 
-	if (argc < 2)
+	if (argc < 3)
 		errx(1, "invalid arguments");
 
 	rcs = rcsopen(argv[1]);
@@ -1392,37 +1360,38 @@ main(int argc, char **argv)
 	if (rcsparsetree(rcs) < 0)
 		return 2;
 
-	if (argv[2] != NULL && strcmp(argv[2], "all") == 0) {
-		struct rcsrev *rrev;
+	for (i = 2; i < argc; i++) {
+		if (strcmp(argv[i], "all") == 0) {
+			struct rcsrev *rrev;
 
-		RB_FOREACH(rrev, rcsrevtree, &rcs->admin.revs) {
-			rev = malloc(rrev->rev->len + 1);
-			memcpy(rev, rrev->rev->str, rrev->rev->len);
-			rev[rrev->rev->len] = 0;
+			RB_FOREACH(rrev, rcsrevtree, &rcs->admin.revs) {
+				rev = malloc(rrev->rev->len + 1);
+				memcpy(rev, rrev->rev->str, rrev->rev->len);
+				rev[rrev->rev->len] = 0;
+				log = rcsgetlog(rcs, rev);
+				free(log);
+				buf = rcscheckout(rcs, rev, &len);
+				free(buf);
+				free(rev);
+			}
+		} else {
+			rev = rcsrevfromsym(rcs, argv[i]);
+			if (rev == NULL)
+				return 3;
+
 			log = rcsgetlog(rcs, rev);
+			if (log == NULL)
+				return 5;
+			printf("%s\n", log);
 			free(log);
+
 			buf = rcscheckout(rcs, rev, &len);
+			if (buf == NULL)
+				return 4;
+			fwrite(buf, 1, len, stdout);
 			free(buf);
 			free(rev);
 		}
-	} else {
-		rev = rcsrevfromsym(rcs, argv[2]);
-		if (rev == NULL)
-			return 3;
-
-		log = rcsgetlog(rcs, rev);
-		if (log == NULL)
-			return 5;
-		printf("%s\n", log);
-		free(log);
-
-		buf = rcscheckout(rcs, rev, &len);
-		if (buf == NULL)
-			return 4;
-		fwrite(buf, 1, len, stdout);
-		free(buf);
-
-		free(rev);
 	}
 
 	rcsclose(rcs);

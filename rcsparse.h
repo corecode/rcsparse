@@ -44,6 +44,7 @@ struct rcsrev {
 	struct rcstoken	*log;
 	struct stringinfo *text;
 	struct stringinfo *rawtext;
+	struct rcsrev  *nextlog;
 };
 
 struct rcsadmin {
