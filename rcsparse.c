@@ -987,6 +987,8 @@ rcscheckout(struct rcsfile *rcs, const char *revstr, size_t *len)
 				/* Was expanded before */
 				curtext = currcsrev->text;
 			} else {
+				if (currcsrev->rawtext == NULL)
+					goto fail;
 				currcsrev->text = copystrnfo(curtext);
 				if (currcsrev->text == NULL)
 					goto fail;
