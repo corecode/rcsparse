@@ -980,6 +980,9 @@ rcscheckout(struct rcsfile *rcs, const char *revstr, size_t *len)
 		if (curtext == NULL) {
 			curtext = currcsrev->rawtext;
 		} else {
+			if (nextrev == NULL)
+				goto fail;
+
 			if (!tokeqtok(currcsrev->rev, nextrev))
 				continue;
 
@@ -1015,8 +1018,6 @@ rcscheckout(struct rcsfile *rcs, const char *revstr, size_t *len)
 			SLIST_FOREACH(nextrev, &currcsrev->branches, link)
 				if (tokeqstrn(nextrev, branchrev, cmplen))
 					break;
-			if (nextrev == NULL)
-				goto fail;
 
 			if (tmpstr != NULL) {
 				tmpstr = strchr(tmpstr + 1, '.');
