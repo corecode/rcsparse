@@ -492,7 +492,7 @@ applydelta(struct stringinfo **text, struct stringinfo *deltatext)
 		if (endpos - pos < 5)	/* check for minimum */
 			goto fail;
 
-		curdelta = malloc(sizeof(struct rcsdelta));
+		curdelta = calloc(1, sizeof(struct rcsdelta));
 		if (curdelta == NULL)
 			goto fail;
 
@@ -510,6 +510,9 @@ applydelta(struct stringinfo **text, struct stringinfo *deltatext)
 			curdelta->len = curdelta->len * 10 + *pos - '0';
 
 		if (pos == endpos || *pos != '\n')
+			goto fail;
+
+		if (curdelta->len == 0)
 			goto fail;
 
 		if (curdelta->action == 'a') {
@@ -541,6 +544,10 @@ applydelta(struct stringinfo **text, struct stringinfo *deltatext)
 			curtext->pos += curdelta->len;
 			break;
 		case 'd':
+			if (curdelta->pos <= 0 ||
+			    curdelta->pos > curtext->pos ||
+			    curdelta->pos + curdelta->len - 1 > curtext->pos)
+				goto fail;
 			bcopy(&curtext->lines[curdelta->pos + curdelta->len - 1],
 			    &curtext->lines[curdelta->pos - 1],
 			    (curtext->pos - curdelta->pos - curdelta->len + 1) *
@@ -995,7 +1002,8 @@ rcscheckout(struct rcsfile *rcs, const char *revstr, size_t *len)
 				currcsrev->text = copystrnfo(curtext);
 				if (currcsrev->text == NULL)
 					goto fail;
-				applydelta(&currcsrev->text, currcsrev->rawtext);
+				if (applydelta(&currcsrev->text, currcsrev->rawtext) < 0)
+					goto fail;
 				free(currcsrev->rawtext);
 				currcsrev->rawtext = NULL;
 				curtext = currcsrev->text;
