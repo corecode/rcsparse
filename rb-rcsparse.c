@@ -315,7 +315,7 @@ rb_rcsfile_checkout(int argc, VALUE *argv, VALUE self)
 	}
 	data = rcscheckout(rb_rf->rf, revstr, &len);
 	if (data == NULL)
-		rb_sys_fail("checkout");
+		rb_raise(rb_eRuntimeError, "Cannot parse RCS file");
 	ret = rb_tainted_str_new(data, len);
 	free(data);
 	return ret;
