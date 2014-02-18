@@ -187,9 +187,9 @@ rb_rcsfile_initialize(int argc, VALUE *argv, VALUE self)
 	Data_Get_Struct(self, struct rb_rcsfile, rb_rf);
 	rb_scan_args(argc, argv, "1", &fname);
 	SafeStringValue(fname);
-	rb_rf->rf = rcsopen(RSTRING(fname)->ptr);
+	rb_rf->rf = rcsopen(RSTRING_PTR(fname));
 	if (rb_rf->rf == NULL)
-		rb_sys_fail(RSTRING(fname)->ptr);
+		rb_sys_fail(RSTRING_PTR(fname));
 	rb_rf->symbols = Qnil;
 	return self;
 }
@@ -328,7 +328,7 @@ rb_rcsfile_checkout(int argc, VALUE *argv, VALUE self)
 
 	if (rb_scan_args(argc, argv, "01", &rev) == 1) {
 		StringValue(rev);
-		revstr = RSTRING(rev)->ptr;
+		revstr = RSTRING_PTR(rev);
 	}
 	data = rcscheckout(rb_rf->rf, revstr, &len);
 	if (data == NULL)
@@ -349,7 +349,7 @@ rb_rcsfile_resolve_sym(int argc, VALUE *argv, VALUE self)
 
 	if (rb_scan_args(argc, argv, "01", &sym) == 1) {
 		StringValue(sym);
-		symstr = RSTRING(sym)->ptr;
+		symstr = RSTRING_PTR(sym);
 	}
 	rev = rcsrevfromsym(rb_rf->rf, symstr);
 	if (rev == NULL)
@@ -367,7 +367,7 @@ rb_rcsfile_getlog(VALUE self, VALUE rev)
 	char *data;
 
 	StringValue(rev);
-	data = rcsgetlog(rb_rf->rf, RSTRING(rev)->ptr);
+	data = rcsgetlog(rb_rf->rf, RSTRING_PTR(rev));
 	if (data == NULL)
 		return Qnil;
 	ret = rb_tainted_str_new2(data);
@@ -395,8 +395,8 @@ rb_revtree_aref(VALUE self, VALUE index)
 
 	StringValue(index);
 	s.rev = &st;
-	st.str = RSTRING(index)->ptr;
-	st.len = RSTRING(index)->len;
+	st.str = RSTRING_PTR(index);
+	st.len = RSTRING_LEN(index);
 	f = RB_FIND(rcsrevtree, rb_rcsfile_revs(self), &s);
 	if (f == NULL)
 		return Qnil;
@@ -483,8 +483,8 @@ rb_revtree_key_p(VALUE self, VALUE index)
 
 	StringValue(index);
 	s.rev = &st;
-	st.str = RSTRING(index)->ptr;
-	st.len = RSTRING(index)->len;
+	st.str = RSTRING_PTR(index);
+	st.len = RSTRING_LEN(index);
 	f = RB_FIND(rcsrevtree, rb_rcsfile_revs(self), &s);
 	if (f == NULL)
 		return Qfalse;
