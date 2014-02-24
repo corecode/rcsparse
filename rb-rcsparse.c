@@ -98,7 +98,7 @@ rb_rcsrev_new(struct rcsrev *rev)
 	VALUE self;
 	VALUE date;
 
-	memset(&tm, 0, sizeof(&tm));
+	memset(&tm, 0, sizeof(tm));
 	if (rev->date->len == 17) {
 		/* 2-digit year */
 		readdate(rev->date->str, &tm.tm_year, 2);
