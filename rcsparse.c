@@ -954,7 +954,7 @@ rcscheckout(struct rcsfile *rcs, const char *revstr, size_t *len)
 {
 	struct rcsrev searchrev;
 	struct rcstoken searchtok;
-	struct rcsrev *currcsrev;
+	struct rcsrev *currcsrev, *curtextrev;
 	struct stringinfo *curtext;
 	struct rcstoken *nextrev;
 	char *branchrev, *tmpstr;
@@ -963,6 +963,7 @@ rcscheckout(struct rcsfile *rcs, const char *revstr, size_t *len)
 	if (rcsparsetree(rcs) < 0)
 		return NULL;
 
+	curtextrev = NULL;
 	curtext = NULL;
 	nextrev = NULL;
 	branchrev = NULL;
@@ -1003,6 +1004,7 @@ rcscheckout(struct rcsfile *rcs, const char *revstr, size_t *len)
 
 		if (curtext == NULL) {
 			curtext = currcsrev->rawtext;
+			curtextrev = currcsrev;
 		} else {
 			if (nextrev == NULL)
 				goto fail;
@@ -1012,7 +1014,12 @@ rcscheckout(struct rcsfile *rcs, const char *revstr, size_t *len)
 
 			if (currcsrev->text) {
 				/* Was expanded before */
+				if (curtextrev != NULL) {
+					free(curtextrev->text);
+					curtextrev->text = NULL;
+				}
 				curtext = currcsrev->text;
+				curtextrev = currcsrev;
 			} else {
 				if (currcsrev->rawtext == NULL)
 					goto fail;
@@ -1021,9 +1028,12 @@ rcscheckout(struct rcsfile *rcs, const char *revstr, size_t *len)
 					goto fail;
 				if (applydelta(&currcsrev->text, currcsrev->rawtext) < 0)
 					goto fail;
-				free(currcsrev->rawtext);
-				currcsrev->rawtext = NULL;
+				if (curtextrev != NULL) {
+					free(curtextrev->text);
+					curtextrev->text = NULL;
+				}
 				curtext = currcsrev->text;
+				curtextrev = currcsrev;
 			}
 		}
 

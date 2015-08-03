@@ -70,7 +70,7 @@ pyrcsrevtree_find_internal(struct pyrcsrevtree *self, PyObject *key, struct rcsr
 {
 	struct rcsrev rev;
 	struct rcstoken tok;
-	int l;
+	Py_ssize_t l;
 
 	if (!PyString_CheckExact(key))
 		return -1;
@@ -339,7 +339,7 @@ pyrcstokmap_find_internal(struct pyrcstokmap *self, PyObject *key, struct rcstok
 {
 	struct rcstokpair pair;
 	struct rcstoken tok;
-	int l;
+	Py_ssize_t l;
 
 	if (!PyString_CheckExact(key))
 		return -1;
