@@ -285,7 +285,7 @@ static PyMappingMethods pyrcsrevtree_mapmethods = {
 };
 
 static PySequenceMethods pyrcsrevtree_seqmethods = {
-	sq_contains:	(objobjproc)pyrcsrevtree_contains
+	.sq_contains=	(objobjproc)pyrcsrevtree_contains
 };
 
 static PyMethodDef pyrcsrevtree_methods[] = {
@@ -301,15 +301,15 @@ static PyMethodDef pyrcsrevtree_methods[] = {
 
 static PyTypeObject pyrcsrevtree_type = {
 	PyObject_HEAD_INIT(&PyType_Type)
-	tp_name:	"rcsparse.rcsrevtree",
-	tp_basicsize:	sizeof(struct pyrcsrevtree),
-	tp_dealloc:	(destructor)pyrcsrevtree_dealloc,
-	tp_as_mapping:	&pyrcsrevtree_mapmethods,
-	tp_as_sequence:	&pyrcsrevtree_seqmethods,
-	tp_flags:	Py_TPFLAGS_DEFAULT,
-	tp_doc:		"RCS Revision Tree Map",
-	tp_new:		PyType_GenericNew,
-	tp_methods:	pyrcsrevtree_methods
+	.tp_name=		"rcsparse.rcsrevtree",
+	.tp_basicsize=		sizeof(struct pyrcsrevtree),
+	.tp_dealloc=		(destructor)pyrcsrevtree_dealloc,
+	.tp_as_mapping=		&pyrcsrevtree_mapmethods,
+	.tp_as_sequence=	&pyrcsrevtree_seqmethods,
+	.tp_flags=		Py_TPFLAGS_DEFAULT,
+	.tp_doc=		"RCS Revision Tree Map",
+	.tp_new=		PyType_GenericNew,
+	.tp_methods=		pyrcsrevtree_methods
 };
 
 static PyObject *
@@ -506,7 +506,7 @@ static PyMappingMethods pyrcstokmap_mapmethods = {
 };
 
 static PySequenceMethods pyrcstokmap_seqmethods = {
-	sq_contains:	(objobjproc)pyrcstokmap_contains
+	.sq_contains=	(objobjproc)pyrcstokmap_contains
 };
 
 static PyMethodDef pyrcstokmap_methods[] = {
@@ -522,15 +522,15 @@ static PyMethodDef pyrcstokmap_methods[] = {
 
 static PyTypeObject pyrcstokmap_type = {
 	PyObject_HEAD_INIT(&PyType_Type)
-	tp_name:	"rcsparse.rcstokmap",
-	tp_basicsize:	sizeof(struct pyrcstokmap),
-	tp_dealloc:	(destructor)pyrcstokmap_dealloc,
-	tp_as_mapping:	&pyrcstokmap_mapmethods,
-	tp_as_sequence:	&pyrcstokmap_seqmethods,
-	tp_flags:	Py_TPFLAGS_DEFAULT,
-	tp_doc:		"RCS Token Map",
-	tp_new:		PyType_GenericNew,
-	tp_methods:	pyrcstokmap_methods
+	.tp_name=		"rcsparse.rcstokmap",
+	.tp_basicsize=		sizeof(struct pyrcstokmap),
+	.tp_dealloc=		(destructor)pyrcstokmap_dealloc,
+	.tp_as_mapping=		&pyrcstokmap_mapmethods,
+	.tp_as_sequence=	&pyrcstokmap_seqmethods,
+	.tp_flags=		Py_TPFLAGS_DEFAULT,
+	.tp_doc=		"RCS Token Map",
+	.tp_new=		PyType_GenericNew,
+	.tp_methods=		pyrcstokmap_methods
 };
 
 static PyObject *
@@ -746,15 +746,15 @@ static PyMethodDef pyrcsfile_methods[] = {
 
 static PyTypeObject pyrcsfile_type = {
 	PyObject_HEAD_INIT(&PyType_Type)
-	tp_name:	"rcsparse.rcsfile",
-	tp_basicsize:	sizeof(struct pyrcsfile),
-	tp_dealloc:	(destructor)pyrcsfile_dealloc,
-	tp_flags:	Py_TPFLAGS_DEFAULT,
-	tp_doc:		"RCS File",
-	tp_getset:	pyrcsfile_getseters,
-	tp_init:	(initproc)pyrcsfile_init,
-	tp_new:		PyType_GenericNew,
-	tp_methods:	pyrcsfile_methods,
+	.tp_name=		"rcsparse.rcsfile",
+	.tp_basicsize=		sizeof(struct pyrcsfile),
+	.tp_dealloc=		(destructor)pyrcsfile_dealloc,
+	.tp_flags=		Py_TPFLAGS_DEFAULT,
+	.tp_doc=		"RCS File",
+	.tp_getset=		pyrcsfile_getseters,
+	.tp_init=		(initproc)pyrcsfile_init,
+	.tp_new=		PyType_GenericNew,
+	.tp_methods=		pyrcsfile_methods,
 };
 
 static PyMethodDef pyrcsparse_methods[] = {
