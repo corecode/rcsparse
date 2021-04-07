@@ -255,6 +255,8 @@ parsetoken(struct rcsfile *rcs)
 		return NULL;
 
 	tok = checktok(rcs);
+	if (tok == NULL)
+		return NULL;
 
 	ch = *rcs->pos;
 	switch (ch) {
